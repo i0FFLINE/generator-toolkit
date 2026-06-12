@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   test_and_build:
-    name: Test\/Build\: ${{ matrix.target }}
+    name: Test&Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
