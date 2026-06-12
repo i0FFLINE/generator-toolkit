@@ -1,0 +1,30 @@
+{
+  "password": {
+    "length": 13,
+    "lower": true,
+    "upper": true,
+    "digits": false,
+    "special": false,
+    "extra": false,
+    "repeat": 0,
+    "reuse": 0,
+    "exclude_ambiguous": false,
+    "strategy": "retry"
+  },
+  "uuid4": null,
+  "uuid5": {
+    "namespace": "dns",
+    "name": "example.com"
+  },
+  "uuid7": null,
+  "ulid": null,
+  "cuid2": null,
+  "nanoid": {
+    "length": 21
+  },
+  "tsid": null,
+  "bcrypt": {
+    "value": "mysecret",
+    "rounds": 12
+  }
+}
