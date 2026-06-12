@@ -47,13 +47,12 @@ jobs:
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: cargo build --target ${{ matrix.target }} --release
-      - name: Prepare Artifacts
-        run: |
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp target/${{ matrix.target }}/release/gentk.exe ./${{ matrix.artifact_name }}
-          else
-            cp target/${{ matrix.target }}/release/gentk ./${{ matrix.artifact_name }}
-          fi
+      - name: Prepare Artifacts (Windows)
+        if: matrix.os == 'windows-latest'
+        run: copy target\${{ matrix.target }}\release\gentk.exe .\${{ matrix.artifact_name }}
+      - name: Prepare Artifacts (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: cp target/${{ matrix.target }}/release/gentk ./${{ matrix.artifact_name }}
       - uses: softprops/action-gh-release@v2
         with:
           files: ${{ matrix.artifact_name }}
