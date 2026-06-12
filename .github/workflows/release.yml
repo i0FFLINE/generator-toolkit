@@ -1,16 +1,12 @@
 name: Build Cross-Platform Release
-
 on:
   push:
-    tags:
-      - 'v*'
-
+    tags: ['v*']
 permissions:
   contents: write
-
 jobs:
   test_and_build:
-    name: Test&Build ${{ matrix.target }}
+    name: Test and Build for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -19,70 +15,46 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact_name: gentk-windows-amd64.exe
-            use_cross: false
-
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact_name: gentk-linux-amd64
-            use_cross: true
-
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             artifact_name: gentk-linux-arm64
-            use_cross: true
-
           - os: macos-13
             target: x86_64-apple-darwin
             artifact_name: gentk-macos-intel
-            use_cross: false
-
           - os: macos-14
             target: aarch64-apple-darwin
             artifact_name: gentk-macos-arm64
-            use_cross: false
-
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v4
+      - name: Install Dependencies
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-
-      - name: Rust Cache
-        uses: swatinem/rust-cache@v2
+      - uses: swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
-
-      - name: Run Cargo Tests (Native only)
-        if: matrix.target == 'x86_64-pc-windows-msvc' || matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'x86_64-apple-darwin' || matrix.target == 'aarch64-apple-darwin'
+      - name: Run Tests
+        if: "!startsWith(matrix.target, 'aarch64-unknown')"
         run: cargo test --target ${{ matrix.target }}
-
-      - name: Install Cross (if needed)
-        if: matrix.use_cross == true
-        run: |
-          curl -L https://github.com | tar xz -C ~/.cargo/bin
-
-      - name: Build Release with Cross
-        if: matrix.use_cross == true
-        run: cross build --target ${{ matrix.target }} --release
-
-      - name: Build Release with Cargo
-        if: matrix.use_cross == false
+      - name: Build
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: cargo build --target ${{ matrix.target }} --release
-
-      - name: Prepare Artifacts (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: cp target/${{ matrix.target }}/release/gentk.exe ./${{ matrix.artifact_name }}
-
-      - name: Prepare Artifacts (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        run: cp target/${{ matrix.target }}/release/gentk ./${{ matrix.artifact_name }}
-
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Prepare Artifacts
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp target/${{ matrix.target }}/release/gentk.exe ./${{ matrix.artifact_name }}
+          else
+            cp target/${{ matrix.target }}/release/gentk ./${{ matrix.artifact_name }}
+          fi
+      - uses: softprops/action-gh-release@v2
         with:
           files: ${{ matrix.artifact_name }}
           draft: true
