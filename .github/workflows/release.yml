@@ -41,18 +41,18 @@ jobs:
       - name: Run Tests
         if: "!startsWith(matrix.target, 'aarch64-unknown') && matrix.target != 'universal-apple-darwin'"
         run: cargo test --target ${{ matrix.target }}
-      - name: Build
+      - name: Build Standard Targets
+        if: matrix.target != 'universal-apple-darwin'
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        run: cargo build --target ${{ matrix.target }} --release
+      - name: Build Universal macOS Binary
+        if: matrix.target == 'universal-apple-darwin'
         run: |
-          if [ "${{ matrix.target }}" = "universal-apple-darwin" ]; then
-            cargo build --target x86_64-apple-darwin --release
-            cargo build --target aarch64-apple-darwin --release
-            mkdir -p target/universal-apple-darwin/release
-            lipo -create target/x86_64-apple-darwin/release/gentk target/aarch64-apple-darwin/release/gentk -output target/universal-apple-darwin/release/gentk
-          else
-            cargo build --target ${{ matrix.target }} --release
-          fi
+          cargo build --target x86_64-apple-darwin --release
+          cargo build --target aarch64-apple-darwin --release
+          mkdir -p target/universal-apple-darwin/release
+          lipo -create target/x86_64-apple-darwin/release/gentk target/aarch64-apple-darwin/release/gentk -output target/universal-apple-darwin/release/gentk
       - name: Prepare Artifacts (Windows)
         if: matrix.os == 'windows-latest'
         run: copy target\${{ matrix.target }}\release\gentk.exe .\${{ matrix.artifact_name }}
