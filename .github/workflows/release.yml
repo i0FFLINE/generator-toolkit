@@ -40,7 +40,6 @@ jobs:
             target: aarch64-apple-darwin
             artifact_name: gentk-macos-arm64
             use_cross: false
-
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
